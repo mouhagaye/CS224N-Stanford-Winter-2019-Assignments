@@ -2,6 +2,7 @@
 
 import numpy as np
 import random
+import math
 
 from utils.gradcheck import gradcheck_naive
 from utils.utils import normalizeRows, softmax
@@ -17,7 +18,7 @@ def sigmoid(x):
     """
 
     ### YOUR CODE HERE
-
+    s = 1 / (1 + np.exp(-x))
     ### END YOUR CODE
 
     return s
@@ -53,11 +54,21 @@ def naiveSoftmaxLossAndGradient(
     """
 
     ### YOUR CODE HERE
-
     ### Please use the provided softmax function (imported earlier in this file)
     ### This numerically stable implementation helps you avoid issues pertaining
     ### to integer overflow. 
 
+    logits = np.matmul(np.transpose(outsideVectors),centerWordVec)
+    y_bar = softmax(logits)
+    yo_bar = y_bar[outsideWordIdx]
+    loss = -np.log(yo_bar)
+
+    N, V = outsideVectors.shape
+    y = np.zeros(V)
+    y[outsideWordIdx] = 1
+
+    gradCenterVec = np.matmul(np.transpose(outsideVectors),y_bar - y)
+    gradOutsideVecs = np.outer(outsideVectors,y_bar - y)
 
     ### END YOUR CODE
 
@@ -105,6 +116,17 @@ def negSamplingLossAndGradient(
     ### YOUR CODE HERE
 
     ### Please use your implementation of sigmoid in here.
+    u_o = outsideVectors[outsideWordIdx]
+
+    loss1 = -np.log(sigmoid(np.dot(u_o,centerWordVec)))
+    loss2 = -sum([np.log(sigmoid(np.dot(outsideVectors[k],centerWordVec))) for k in negSampleWordIndices])
+
+    loss= loss1 + loss2
+
+    gradCenterVec = (sigmoid(np.dot(u_o,centerWordVec)) - 1)*u_o - sum((sigmoid(np.outer(-u_k,centerWordVec))-1)*u_k)
+    gradCenterVec = (sigmoid(np.outer(u_o,centerWordVec)) - 1)*u_o - sum((sigmoid(np.outer(-u_k,centerWordVec))-1)*u_k)
+
+
 
 
     ### END YOUR CODE
